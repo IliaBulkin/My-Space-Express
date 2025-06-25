@@ -1,0 +1,87 @@
+model FriendRequest {
+  id         Int     @id @default(autoincrement())
+  fromUser   Int
+  toUser     Int
+  isAccepted Boolean
+
+  fromUserDetails User @relation("FromUser", fields: [fromUser], references: [id])
+  toUserDetails   User @relation("ToUser", fields: [toUser], references: [id])
+}
+
+model Image {
+  id     Int    @id @default(autoincrement())
+  base64 String
+
+  postId Int
+  post   Post @relation(fields: [postId], references: [id])
+}
+
+model Post {
+  id    Int    @id @default(autoincrement())
+  title String
+  text  String
+  views Int    @default(0)
+  likes Int    @default(0)
+  link  Link[]
+
+  tags   TagToPost[]
+  images Image[]
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+}
+
+model Link {
+  id     Int    @id @default(autoincrement())
+  url    String
+  post   Post   @relation(fields: [postId], references: [id])
+  postId Int
+}
+
+model TagToPost {
+  tag    Tag  @relation(fields: [tagId], references: [id])
+  tagId  Int
+  post   Post @relation(fields: [postId], references: [id])
+  postId Int
+
+  @@id([tagId, postId])
+}
+
+model Tag {
+  id    Int         @id @default(autoincrement())
+  name  String      @unique
+  posts TagToPost[]
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String?
+  surname     String?
+  email       String    @unique
+  phoneNumber String?   @unique
+  birthDate   DateTime?
+  image       String?
+  password    String
+  username    String?   @unique
+
+  posts Post[]
+
+  sentRequests     FriendRequest[] @relation("FromUser")
+  receivedRequests FriendRequest[] @relation("ToUser")
+}
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
